@@ -124,7 +124,11 @@
   <div class="grid" id="catalog"></div>
 
   <h2>📝 Your Order &amp; Contact Details</h2>
-  <form id="orderForm" onsubmit="return buildOrder(event)">
+  <form id="orderForm" name="order" method="POST" netlify netlify-honeypot="bot-field" onsubmit="return buildOrder(event)">
+    <p class="hidden" style="display:none">
+      <label>Don't fill this: <input name="bot-field" /></label>
+    </p>
+    <input type="hidden" id="order-details" name="order-details" />
     <div class="summary" id="summary"><span class="empty">No items selected yet.</span></div>
 
     <div class="row">
@@ -254,6 +258,23 @@
     const grand = items.reduce((s,it)=>s+it.total,0);
     msg += `\n*Total:* ₹${grand}\n\n`;
     msg += `*Name:* ${name}\n*Contact:* ${phone}\n*Address:* ${address}`;
+
+    // Build a plain-text order summary for the email (Netlify Forms)
+    let emailBody = "FRESH CATCH - NEW ORDER\n\n";
+    items.forEach(it => {
+      emailBody += `${it.name} (${it.tamil})\n${it.packs} pack${it.packs>1?'s':''} (500g) × ₹${it.pack} = ₹${it.total}\n\n`;
+    });
+    emailBody += `Total: ₹${grand}\n\nName: ${name}\nContact: ${phone}\nAddress: ${address}`;
+    document.getElementById("order-details").value = emailBody;
+
+    // Submit form to Netlify in the background (silent; no layout change)
+    const form = document.getElementById("orderForm");
+    const fd = new FormData(form);
+    fetch("/", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams(fd).toString()
+    }).catch(() => {}); // best-effort; WhatsApp still opens regardless
 
     const url = "https://wa.me/919445618342?text=" + encodeURIComponent(msg);
     window.open(url, "_blank");
