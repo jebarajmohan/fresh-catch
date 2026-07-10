@@ -129,11 +129,11 @@
       <div class="tamil">${f.tamil}</div>
       <div class="price">₹${f.price}/kg</div>
       <div class="qty">
-        <button type="button" onclick="step(${i},-1)">−</button>
+        <button type="button" onclick="step(${i},-0.5)">−</button>
         <input id="qty-${i}" type="number" min="0" step="0.5" value="0"
                onchange="setQty(${i}, this.value)" />
         <span class="unit">kg</span>
-        <button type="button" onclick="step(${i},1)">+</button>
+        <button type="button" onclick="step(${i},0.5)">+</button>
       </div>`;
     catalog.appendChild(card);
   });
