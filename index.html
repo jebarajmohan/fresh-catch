@@ -24,17 +24,19 @@
         padding:16px 18px;margin-bottom:24px;box-shadow:0 2px 10px rgba(10,110,189,.06)}
   .lead b{color:var(--sea-deep)}
   .grid{display:flex;flex-direction:column;gap:14px}
-  .card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px;
-        display:flex;flex-direction:column;gap:8px;box-shadow:0 2px 10px rgba(10,110,189,.06)}
-  .card .emoji{font-size:2rem}
+  .card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px 16px;
+        display:flex;align-items:center;gap:14px;box-shadow:0 2px 10px rgba(10,110,189,.06)}
+  .card .card-info{display:flex;align-items:center;gap:14px;flex:1;min-width:0}
+  .card .emoji{font-size:2.4rem;flex-shrink:0;line-height:1}
+  .card .card-text{min-width:0;flex:1}
   .card .name{font-weight:700;font-size:1.05rem}
   .card .tamil{color:#5a7891;font-size:.9rem}
-  .card .price{color:var(--accent);font-weight:800;font-size:1.15rem}
-  .qty{display:flex;align-items:center;gap:8px;margin-top:auto}
+  .card .price{color:var(--accent);font-weight:800;font-size:1.15rem;margin-top:2px}
+  .qty{display:flex;align-items:center;gap:8px;flex-shrink:0}
   .qty button{width:34px;height:34px;border:none;border-radius:8px;background:var(--foam);
                color:var(--sea-deep);font-size:1.2rem;cursor:pointer;font-weight:700}
   .qty button:active{transform:scale(.92)}
-  .qty input{width:64px;text-align:center;border:1px solid var(--line);border-radius:8px;
+  .qty input{width:56px;text-align:center;border:1px solid var(--line);border-radius:8px;
               padding:7px;font-size:1rem}
   .qty .unit{color:#5a7891;font-size:.85rem}
   h2{margin:32px 0 14px;color:var(--sea-deep);font-size:1.4rem;
@@ -75,11 +77,12 @@
     header h1{font-size:1.8rem}
     header p{font-size:.98rem}
     .wrap{padding:18px 12px 48px}
-    .card{padding:14px;gap:6px}
+    .card{padding:12px 14px;gap:10px}
+    .card .emoji{font-size:2rem}
     .card .name{font-size:.95rem}
     .card .price{font-size:1.05rem}
     .qty{gap:6px}
-    .qty input{width:56px}
+    .qty input{width:52px}
     h2{font-size:1.2rem}
   }
   @media(max-width:380px){
@@ -157,10 +160,14 @@
     const card = document.createElement("div");
     card.className = "card";
     card.innerHTML = `
-      <div class="emoji">${f.emoji}</div>
-      <div class="name">${f.name}</div>
-      <div class="tamil">${f.tamil}</div>
-      <div class="price">₹${f.pack} / 500g pack</div>
+      <div class="card-info">
+        <div class="emoji">${f.emoji}</div>
+        <div class="card-text">
+          <div class="name">${f.name}</div>
+          <div class="tamil">${f.tamil}</div>
+          <div class="price">₹${f.pack} / 500g pack</div>
+        </div>
+      </div>
       <div class="qty">
         <button type="button" onclick="step(${i},-1)">−</button>
         <input id="qty-${i}" type="number" min="0" step="1" value="0"
