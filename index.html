@@ -234,7 +234,7 @@
 
     let msg = "🐟 *FRESH CATCH — NEW ORDER*\n\n";
     items.forEach(it => {
-      msg += `${it.name} (${it.tamil})\n${it.packs} pack${it.packs>1?'s':''} × ₹${it.pack} = ₹${it.total}\n`;
+      msg += `${it.name} (${it.tamil})\n${it.packs} pack${it.packs>1?'s':''} × ₹${it.pack} = ₹${it.total}\n\n`;
     });
     const grand = items.reduce((s,it)=>s+it.total,0);
     msg += `\n*Total:* ₹${grand}\n\n`;
