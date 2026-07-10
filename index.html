@@ -66,7 +66,7 @@
 
 <div class="wrap">
   <div class="lead">
-    📦 All prices are <b>per kilogram</b>. &nbsp; 🚚 <b>Home Delivery Available</b>.
+    📦 Prices are <b>per 500g pack</b>. &nbsp; 🚚 <b>Home Delivery Available</b>.
     Select your fish &amp; quantity below, fill in your details, and send your order on WhatsApp.
   </div>
 
@@ -115,8 +115,9 @@
     {emoji:"🦀", name:"Crab - Medium Size",          tamil:"நண்டு",              price:500},
     {emoji:"🐟", name:"Nethili (Anchovy)",           tamil:"நெத்திலி",           price:400},
   ];
+  FISH.forEach(f => f.pack = f.price / 2);  // 500g pack price = half of per-kg
 
-  const qty = {};  // name -> kg
+  const qty = {};  // name -> number of 500g packs
 
   const catalog = document.getElementById("catalog");
   FISH.forEach((f, i) => {
@@ -127,13 +128,13 @@
       <div class="emoji">${f.emoji}</div>
       <div class="name">${f.name}</div>
       <div class="tamil">${f.tamil}</div>
-      <div class="price">₹${f.price}/kg</div>
+      <div class="price">₹${f.pack} / 500g pack</div>
       <div class="qty">
-        <button type="button" onclick="step(${i},-0.5)">−</button>
-        <input id="qty-${i}" type="number" min="0" step="0.5" value="0"
+        <button type="button" onclick="step(${i},-1)">−</button>
+        <input id="qty-${i}" type="number" min="0" step="1" value="0"
                onchange="setQty(${i}, this.value)" />
-        <span class="unit">kg</span>
-        <button type="button" onclick="step(${i},0.5)">+</button>
+        <span class="unit">pack</span>
+        <button type="button" onclick="step(${i},1)">+</button>
       </div>`;
     catalog.appendChild(card);
   });
@@ -152,7 +153,10 @@
 
   function selectedItems(){
     return FISH.filter(f => qty[f.name] > 0)
-               .map(f => ({...f, kg: qty[f.name], total: qty[f.name]*f.price}));
+               .map(f => {
+                 const packs = qty[f.name];
+                 return {...f, packs, grams: packs*500, total: packs*f.pack};
+               });
   }
 
   function renderSummary(){
@@ -165,7 +169,7 @@
     let txt = "ORDER SUMMARY\n";
     let grand = 0;
     items.forEach(it => {
-      txt += `• ${it.name} (${it.tamil}) — ${it.kg} kg × ₹${it.price} = ₹${it.total}\n`;
+      txt += `• ${it.name} (${it.tamil}) — ${it.packs} pack(s) × ₹${it.pack} (500g) = ₹${it.total}\n`;
       grand += it.total;
     });
     txt += `\nTotal: ₹${grand}`;
@@ -185,7 +189,7 @@
 
     let msg = "🐟 *FRESH CATCH — NEW ORDER*\n\n";
     items.forEach(it => {
-      msg += `• ${it.name} (${it.tamil}) — ${it.kg} kg × ₹${it.price} = ₹${it.total}\n`;
+      msg += `• ${it.name} (${it.tamil}) — ${it.packs} pack(s) × ₹${it.pack} (500g) = ₹${it.total}\n`;
     });
     const grand = items.reduce((s,it)=>s+it.total,0);
     msg += `\n*Total:* ₹${grand}\n\n`;
