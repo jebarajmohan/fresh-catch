@@ -48,10 +48,22 @@
   textarea{resize:vertical;min-height:80px}
   .field{margin-bottom:16px}
   .summary{background:var(--foam);border:1px dashed var(--sea);border-radius:10px;
-           padding:12px;margin-bottom:16px;font-size:.95rem;white-space:pre-wrap;
+           padding:14px;margin-bottom:16px;font-size:.95rem;
            word-break:break-word;overflow-wrap:anywhere}
-  .summary .empty{color:#5a7891;font-style:italic}
-  .summary .total{font-weight:800;color:var(--sea-deep);font-size:1.05rem;margin-top:4px}
+  .summary .empty{color:#5a7891;font-style:italic;display:block;padding:4px}
+  .summary .sum-head{font-weight:800;color:var(--sea-deep);letter-spacing:.5px;
+                     font-size:.82rem;margin-bottom:10px}
+  .summary .sum-item{padding:8px 0;border-bottom:1px solid #cfe3f3}
+  .summary .sum-item:last-of-type{border-bottom:none}
+  .summary .sum-name{font-weight:700;color:var(--ink)}
+  .summary .sum-tamil{font-weight:400;color:#5a7891;font-size:.85rem;margin-left:4px}
+  .summary .sum-line{display:flex;justify-content:space-between;align-items:baseline;
+                     margin-top:3px;color:#3a5a72}
+  .summary .sum-qty{font-size:.9rem}
+  .summary .sum-amt{font-weight:700;color:var(--ink)}
+  .summary .sum-total{display:flex;justify-content:space-between;align-items:baseline;
+                      margin-top:12px;padding-top:10px;border-top:2px solid var(--sea);
+                      font-weight:800;color:var(--sea-deep);font-size:1.1rem}
   .submit{background:var(--ok);color:#fff;border:none;border-radius:12px;padding:15px 22px;
           font-size:1.1rem;font-weight:800;cursor:pointer;width:100%;display:flex;
           align-items:center;justify-content:center;gap:10px}
@@ -186,13 +198,19 @@
       el.innerHTML = '<span class="empty">No items selected yet.</span>';
       return;
     }
-    let txt = "ORDER SUMMARY<br>";
+    let txt = `<div class="sum-head">ORDER SUMMARY</div>`;
     let grand = 0;
     items.forEach(it => {
-      txt += `• ${it.name} (${it.tamil}) — ${it.packs} pack(s) × ₹${it.pack} (500g) = ₹${it.total}<br>`;
+      txt += `<div class="sum-item">
+                <div class="sum-name">${it.name} <span class="sum-tamil">${it.tamil}</span></div>
+                <div class="sum-line">
+                  <span class="sum-qty">${it.packs} pack${it.packs>1?'s':''} × ₹${it.pack}</span>
+                  <span class="sum-amt">₹${it.total}</span>
+                </div>
+              </div>`;
       grand += it.total;
     });
-    txt += `<div class="total">Total: ₹${grand}</div>`;
+    txt += `<div class="sum-total"><span>Total</span><span>₹${grand}</span></div>`;
     el.innerHTML = txt;
   }
 
@@ -209,7 +227,7 @@
 
     let msg = "🐟 *FRESH CATCH — NEW ORDER*\n\n";
     items.forEach(it => {
-      msg += `• ${it.name} (${it.tamil}) — ${it.packs} pack(s) × ₹${it.pack} (500g) = ₹${it.total}\n`;
+      msg += `${it.name} (${it.tamil})\n${it.packs} pack${it.packs>1?'s':''} × ₹${it.pack} = ₹${it.total}\n`;
     });
     const grand = items.reduce((s,it)=>s+it.total,0);
     msg += `\n*Total:* ₹${grand}\n\n`;
