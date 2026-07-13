@@ -162,48 +162,40 @@
 </footer>
 
 <script>
-  const FISH = [
-    {emoji:"🐟", name:"Vanjaram (Seer Fish)",        tamil:"வஞ்சிரம்",            price:1200},
-    {emoji:"🐠", name:"White Pomfret",               tamil:"வெள்ளை வவ்வால்",     price:1000},
-    {emoji:"🐟", name:"Black Sea Pomfret",           tamil:"கடல் வவ்வால் - பிளாக்", price:1000},
-    {emoji:"🐟", name:"Paarai (Cobia)",              tamil:"பாறை",              price:600},
-    {emoji:"🐟", name:"Sheela (Barracuda)",          tamil:"ஷீலா",              price:600},
-    {emoji:"🐟", name:"Shankara (Red Snapper)",      tamil:"சங்கரா",            price:450},
-    {emoji:"🦐", name:"Prawns - Big Size",           tamil:"இறால்",              price:500},
-    {emoji:"🦐", name:"Tiger Prawns",                tamil:"டைகர் இறால்",        price:850},
-    {emoji:"🦀", name:"Crab - Medium Size",          tamil:"நண்டு",              price:500},
-    {emoji:"🐟", name:"Nethili (Anchovy)",           tamil:"நெத்திலி",           price:400},
-  ];
-  FISH.forEach(f => f.pack = f.price / 2);  // 500g pack price = half of per-kg
-
+  // Catalog is loaded live from /api/catalog (GitHub-backed, editable in admin)
+  let FISH = [];
   const qty = {};  // name -> number of 500g packs
   const soldOut = new Set();
 
   const catalog = document.getElementById("catalog");
-  FISH.forEach((f, i) => {
-    qty[f.name] = 0;
-    const card = document.createElement("div");
-    card.className = "card";
-    card.id = "card-" + i;
-    card.innerHTML = `
-      <div class="card-info">
-        <div class="emoji">${f.emoji}</div>
-        <div class="card-text">
-          <div class="name">${f.name}</div>
-          <div class="tamil">${f.tamil}</div>
-          <div class="price">₹${f.pack} / 500g pack</div>
+  function renderCatalog(){
+    catalog.innerHTML = "";
+    FISH.forEach((f, i) => {
+      qty[f.name] = qty[f.name] || 0;
+      const card = document.createElement("div");
+      card.className = "card";
+      card.id = "card-" + i;
+      card.innerHTML = `
+        <div class="card-info">
+          <div class="emoji">${f.emoji || "🐟"}</div>
+          <div class="card-text">
+            <div class="name">${f.name}</div>
+            <div class="tamil">${f.tamil || ""}</div>
+            <div class="price">₹${f.pack} / 500g pack</div>
+          </div>
+          <span class="soldout-badge" id="badge-${i}" style="display:none">Sold Out</span>
         </div>
-        <span class="soldout-badge" id="badge-${i}" style="display:none">Sold Out</span>
-      </div>
-      <div class="qty">
-        <button type="button" id="minus-${i}" onclick="step(${i},-1)">−</button>
-        <input id="qty-${i}" type="number" min="0" step="1" value="0"
-               onchange="setQty(${i}, this.value)" />
-        <button type="button" id="plus-${i}" onclick="step(${i},1)">+</button>
-        <span class="unit">pack</span>
-      </div>`;
-    catalog.appendChild(card);
-  });
+        <div class="qty">
+          <button type="button" id="minus-${i}" onclick="step(${i},-1)">−</button>
+          <input id="qty-${i}" type="number" min="0" step="1" value="0"
+                 onchange="setQty(${i}, this.value)" />
+          <button type="button" id="plus-${i}" onclick="step(${i},1)">+</button>
+          <span class="unit">pack</span>
+        </div>`;
+      catalog.appendChild(card);
+    });
+    applySoldOut();
+  }
 
   function applySoldOut(){
     FISH.forEach((f, i) => {
@@ -217,7 +209,6 @@
         card.classList.add("is-soldout");
         badge.style.display = "inline-block";
         minus.disabled = true; plus.disabled = true; inp.disabled = true;
-        // reset any selected qty
         qty[f.name] = 0; inp.value = 0;
         renderSummary();
       } else {
@@ -228,14 +219,21 @@
     });
   }
 
-  // Load stock state from Netlify function
-  fetch("/api/stock", { headers: { "cache-control": "no-store" } })
-    .then(r => r.ok ? r.json() : {})
-    .then(map => {
-      Object.keys(map).forEach(n => { if(map[n]) soldOut.add(n); });
-      applySoldOut();
-    })
-    .catch(() => {/* offline: assume all available */});
+  // Load catalog + sold-out state
+  Promise.all([
+    fetch("/api/catalog", { headers: { "cache-control": "no-store" } }).then(r => r.ok ? r.json() : []),
+    fetch("/api/stock", { headers: { "cache-control": "no-store" } }).then(r => r.ok ? r.json() : {})
+  ]).then(([list, stockMap]) => {
+    FISH = (Array.isArray(list) ? list : []).map(f => {
+      f.pack = (Number(f.price) || 0) / 2;  // 500g pack price = half of per-kg
+      return f;
+    });
+    Object.keys(stockMap).forEach(n => { if(stockMap[n]) soldOut.add(n); });
+    // legacy: if a product carried soldOut in catalog, honor it too
+    FISH.forEach(f => { if(f.soldOut) soldOut.add(f.name); });
+    renderCatalog();
+    renderSummary();
+  }).catch(() => { /* offline: show nothing / assume available */ });
 
   function setQty(i, val){
     let v = parseFloat(val);
