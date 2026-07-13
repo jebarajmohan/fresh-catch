@@ -107,13 +107,14 @@
         headers:{ "content-type":"application/json" },
         body: JSON.stringify({ name, soldOut })
       });
-      if(!res.ok){ throw new Error("unauthorized"); }
+      if(res.status === 401){ throw new Error("wrong passcode"); }
+      if(!res.ok){ throw new Error("server save failed"); }
       row.classList.toggle("out", soldOut);
       row.querySelector(".tl").textContent = TAMIL[name] + (soldOut ? " — SOLD OUT" : "");
       document.getElementById("status").textContent = `${name}: ${soldOut ? "marked sold out" : "back in stock"}.`;
     } catch(e){
       el.checked = !soldOut; // revert
-      document.getElementById("status").textContent = "Failed (wrong passcode or network).";
+      document.getElementById("status").textContent = "Failed: " + e.message + ". Check passcode or site deploy.";
     }
   }
 </script>
