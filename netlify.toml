@@ -5,6 +5,13 @@
 [functions]
   directory = "netlify/functions"
 
+# Exempt API routes from the SPA catch-all so Netlify Functions handle them
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/:splat"
+  status = 200
+  force = true
+
 [[redirects]]
   from = "/*"
   to = "/index.html"
