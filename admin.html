@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Fresh Catch — Stock Admin</title>
+<style>
+  :root{--sea:#0a6ebd;--sea-deep:#064b80;--foam:#e9f6ff;--ink:#08324f;--ok:#1aa86b;--line:#d6e7f3}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+       background:var(--foam);color:var(--ink);line-height:1.5;padding:20px}
+  .wrap{max-width:560px;margin:0 auto}
+  h1{color:var(--sea-deep);font-size:1.6rem;margin-bottom:6px}
+  .sub{color:#5a7891;font-size:.9rem;margin-bottom:18px}
+  .lock{background:#fff;border:1px solid var(--line);border-radius:12px;padding:18px;margin-bottom:18px}
+  .lock input{width:100%;border:1px solid var(--line);border-radius:8px;padding:11px;font-size:1rem;margin:8px 0}
+  button{padding:11px 16px;border:none;border-radius:8px;background:var(--sea);color:#fff;font-weight:700;cursor:pointer;font-size:.95rem}
+  .panel{display:none}
+  .row{display:flex;align-items:center;justify-content:space-between;gap:12px;
+        background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-bottom:10px}
+  .row .nm{font-weight:700}
+  .row .tl{color:#5a7891;font-size:.85rem}
+  /* toggle */
+  .switch{position:relative;display:inline-block;width:52px;height:30px;flex-shrink:0}
+  .switch input{opacity:0;width:0;height:0}
+  .slider{position:absolute;cursor:pointer;inset:0;background:#cbd6df;border-radius:999px;transition:.2s}
+  .slider:before{content:"";position:absolute;height:22px;width:22px;left:4px;bottom:4px;background:#fff;border-radius:50%;transition:.2s}
+  input:checked + .slider{background:var(--ok)}
+  input:checked + .slider:before{transform:translateX(22px)}
+  .status{margin-top:14px;font-size:.9rem;color:var(--sea-deep);min-height:1.2em}
+  .out .nm{color:#e23b3b}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Fresh Catch — Stock Admin</h1>
+  <div class="sub">Toggle fish on/off as they sell out. Changes apply live to the site.</div>
+
+  <div class="lock" id="lock">
+    <label for="code">Admin passcode</label>
+    <input id="code" type="password" placeholder="Enter passcode" />
+    <button onclick="unlock()">Unlock</button>
+    <div class="status" id="lockStatus"></div>
+  </div>
+
+  <div class="panel" id="panel">
+    <div id="list"></div>
+    <div class="status" id="status"></div>
+    <p style="margin-top:16px;font-size:.85rem;color:#5a7891">Tip: the passcode is set via Netlify env var <code>ADMIN_CODE</code> (default: freshcatch2026).</p>
+  </div>
+</div>
+
+<script>
+  // Mirror of the fish list (names must match index.html exactly)
+  const FISH = [
+    "Vanjaram (Seer Fish)","White Pomfret","Black Sea Pomfret","Paarai (Cobia)",
+    "Sheela (Barracuda)","Shankara (Red Snapper)","Prawns - Big Size","Tiger Prawns",
+    "Crab - Medium Size","Nethili (Anchovy)"
+  ];
+  const TAMIL = {
+    "Vanjaram (Seer Fish)":"வஞ்சிரம்","White Pomfret":"வெள்ளை வவ்வால்",
+    "Black Sea Pomfret":"கடல் வவ்வால் - பிளாக்","Paarai (Cobia)":"பாறை",
+    "Sheela (Barracuda)":"ஷீலா","Shankara (Red Snapper)":"சங்கரா",
+    "Prawns - Big Size":"இறால்","Tiger Prawns":"டைகர் இறால்",
+    "Crab - Medium Size":"நண்டு","Nethili (Anchovy)":"நெத்திலி"
+  };
+  let CODE = "";
+
+  function unlock(){
+    CODE = document.getElementById("code").value.trim();
+    if(!CODE){ document.getElementById("lockStatus").textContent = "Enter the passcode."; return; }
+    // test with a harmless GET first
+    fetch("/api/stock").then(() => {
+      document.getElementById("lock").style.display = "none";
+      document.getElementById("panel").style.display = "block";
+      loadStock();
+    }).catch(()=>{ document.getElementById("lockStatus").textContent = "Network error."; });
+  }
+
+  async function loadStock(){
+    let map = {};
+    try { map = await (await fetch("/api/stock")).json(); } catch(e){}
+    const list = document.getElementById("list");
+    list.innerHTML = "";
+    FISH.forEach(name => {
+      const out = !!map[name];
+      const row = document.createElement("div");
+      row.className = "row" + (out ? " out" : "");
+      row.innerHTML = `
+        <div>
+          <div class="nm">${name}</div>
+          <div class="tl">${TAMIL[name]} ${out ? "— SOLD OUT" : ""}</div>
+        </div>
+        <label class="switch">
+          <input type="checkbox" ${out ? "checked" : ""} onchange="toggle('${name.replace(/'/g,"\\'")}', this.checked, this)">
+          <span class="slider"></span>
+        </label>`;
+      list.appendChild(row);
+    });
+  }
+
+  async function toggle(name, soldOut, el){
+    const row = el.closest(".row");
+    try {
+      const res = await fetch("/api/stock?code=" + encodeURIComponent(CODE), {
+        method:"POST",
+        headers:{ "content-type":"application/json" },
+        body: JSON.stringify({ name, soldOut })
+      });
+      if(!res.ok){ throw new Error("unauthorized"); }
+      row.classList.toggle("out", soldOut);
+      row.querySelector(".tl").textContent = TAMIL[name] + (soldOut ? " — SOLD OUT" : "");
+      document.getElementById("status").textContent = `${name}: ${soldOut ? "marked sold out" : "back in stock"}.`;
+    } catch(e){
+      el.checked = !soldOut; // revert
+      document.getElementById("status").textContent = "Failed (wrong passcode or network).";
+    }
+  }
+</script>
+</body>
+</html>

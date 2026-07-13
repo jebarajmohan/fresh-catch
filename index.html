@@ -53,6 +53,10 @@
   .qty input{width:60px;text-align:center;border:1px solid var(--line);border-radius:8px;
               padding:7px;font-size:1rem}
   .qty .unit{color:#5a7891;font-size:.85rem}
+  .soldout-badge{display:none;margin-left:auto;background:#e23b3b;color:#fff;font-weight:800;
+                 font-size:.72rem;letter-spacing:.5px;padding:3px 9px;border-radius:999px;text-transform:uppercase}
+  .card.is-soldout{opacity:.55;filter:grayscale(.6)}
+  .card.is-soldout .price{color:#9aa7b2}
   h2{margin:32px 0 14px;color:var(--sea-deep);font-size:1.4rem;
      border-left:5px solid var(--accent);padding-left:10px}
   form{background:#fff;border:1px solid var(--line);border-radius:14px;padding:20px;
@@ -173,12 +177,14 @@
   FISH.forEach(f => f.pack = f.price / 2);  // 500g pack price = half of per-kg
 
   const qty = {};  // name -> number of 500g packs
+  const soldOut = new Set();
 
   const catalog = document.getElementById("catalog");
   FISH.forEach((f, i) => {
     qty[f.name] = 0;
     const card = document.createElement("div");
     card.className = "card";
+    card.id = "card-" + i;
     card.innerHTML = `
       <div class="card-info">
         <div class="emoji">${f.emoji}</div>
@@ -187,16 +193,49 @@
           <div class="tamil">${f.tamil}</div>
           <div class="price">₹${f.pack} / 500g pack</div>
         </div>
+        <span class="soldout-badge" id="badge-${i}" style="display:none">Sold Out</span>
       </div>
       <div class="qty">
-        <button type="button" onclick="step(${i},-1)">−</button>
+        <button type="button" id="minus-${i}" onclick="step(${i},-1)">−</button>
         <input id="qty-${i}" type="number" min="0" step="1" value="0"
                onchange="setQty(${i}, this.value)" />
-        <button type="button" onclick="step(${i},1)">+</button>
+        <button type="button" id="plus-${i}" onclick="step(${i},1)">+</button>
         <span class="unit">pack</span>
       </div>`;
     catalog.appendChild(card);
   });
+
+  function applySoldOut(){
+    FISH.forEach((f, i) => {
+      const isOut = soldOut.has(f.name);
+      const card = document.getElementById("card-"+i);
+      const badge = document.getElementById("badge-"+i);
+      const minus = document.getElementById("minus-"+i);
+      const plus = document.getElementById("plus-"+i);
+      const inp = document.getElementById("qty-"+i);
+      if(isOut){
+        card.classList.add("is-soldout");
+        badge.style.display = "inline-block";
+        minus.disabled = true; plus.disabled = true; inp.disabled = true;
+        // reset any selected qty
+        qty[f.name] = 0; inp.value = 0;
+        renderSummary();
+      } else {
+        card.classList.remove("is-soldout");
+        badge.style.display = "none";
+        minus.disabled = false; plus.disabled = false; inp.disabled = false;
+      }
+    });
+  }
+
+  // Load stock state from Netlify function
+  fetch("/api/stock", { headers: { "cache-control": "no-store" } })
+    .then(r => r.ok ? r.json() : {})
+    .then(map => {
+      Object.keys(map).forEach(n => { if(map[n]) soldOut.add(n); });
+      applySoldOut();
+    })
+    .catch(() => {/* offline: assume all available */});
 
   function setQty(i, val){
     let v = parseFloat(val);
