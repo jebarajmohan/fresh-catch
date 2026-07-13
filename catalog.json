@@ -68,5 +68,12 @@
     "tamil": "நெத்திலி",
     "price": 400,
     "soldOut": true
+  },
+  {
+    "emoji": "🐟",
+    "name": "Fish",
+    "tamil": "Meen",
+    "price": 100,
+    "soldOut": false
   }
 ]
