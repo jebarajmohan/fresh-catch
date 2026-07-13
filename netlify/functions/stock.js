@@ -1,16 +1,18 @@
-import { getStore } from "@netlify/blobs";
-
 const STORE_NAME = "fish-stock";
 const ADMIN_CODE = process.env.ADMIN_CODE || "freshcatch2026"; // set ADMIN_CODE in Netlify UI for security
 const STOCK_KEY = "soldout";
 
 export default async (req, context) => {
-  const store = getStore(STORE_NAME);
+  // Netlify Functions v2 injects `context.blobs` (BlobStore) automatically.
+  const store = context.blobs;
 
-  // Read current sold-out map
   const readMap = async () => {
-    const raw = await store.get(STOCK_KEY, { type: "json" });
-    return raw && typeof raw === "object" ? raw : {};
+    try {
+      const raw = await store.get(STOCK_KEY, { type: "json" });
+      return raw && typeof raw === "object" ? raw : {};
+    } catch (e) {
+      return {};
+    }
   };
 
   if (req.method === "GET") {
@@ -21,8 +23,8 @@ export default async (req, context) => {
   }
 
   if (req.method === "POST") {
-    // Auth check
-    const auth = req.headers.get("x-admin-code") || new URL(req.url).searchParams.get("code") || "";
+    const auth =
+      req.headers.get("x-admin-code") || new URL(req.url).searchParams.get("code") || "";
     if (!auth || auth !== ADMIN_CODE) {
       return new Response(JSON.stringify({ error: "unauthorized" }), {
         status: 401,
@@ -54,7 +56,7 @@ export default async (req, context) => {
     if (soldOut) map[name] = true;
     else delete map[name];
 
-    await store.set(STOCK_KEY, JSON.stringify(map), { metadata: { updated: Date.now() } });
+    await store.set(STOCK_KEY, JSON.stringify(map));
 
     return new Response(JSON.stringify({ ok: true, map }), {
       headers: { "content-type": "application/json" },
