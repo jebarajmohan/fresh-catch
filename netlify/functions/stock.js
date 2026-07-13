@@ -1,10 +1,10 @@
-const STORE_NAME = "fish-stock";
+import { getStore } from "@netlify/blobs";
+
 const ADMIN_CODE = process.env.ADMIN_CODE || "freshcatch2026"; // set ADMIN_CODE in Netlify UI for security
 const STOCK_KEY = "soldout";
 
 export default async (req, context) => {
-  // Netlify Functions v2 injects `context.blobs` (BlobStore) automatically.
-  const store = context.blobs;
+  const store = getStore({ name: "fish-stock", siteID: context.site?.id });
 
   const readMap = async () => {
     try {
