@@ -25,12 +25,12 @@
   .row input.tl-in{color:#5a7891;font-size:.85rem;min-width:110px;border:1px solid var(--line);border-radius:8px;padding:8px}
   .row input.price{width:110px;border:1px solid var(--line);border-radius:8px;padding:8px;font-size:1rem}
   .row .emoji{font-size:1.6rem}
-  /* switch: ON (sold out) = red, OFF (in stock) = grey */
+  /* switch: ON (in stock) = green, OFF (sold out) = grey */
   .switch{position:relative;display:inline-block;width:52px;height:30px;flex-shrink:0}
   .switch input{opacity:0;width:0;height:0}
-  .slider{position:absolute;cursor:pointer;inset:0;background:#cbd6df;border-radius:999px;transition:.2s}
+  .slider{position:absolute;cursor:pointer;inset:0;background:var(--ok);border-radius:999px;transition:.2s}
   .slider:before{content:"";position:absolute;height:22px;width:22px;left:4px;bottom:4px;background:#fff;border-radius:50%;transition:.2s}
-  input:checked + .slider{background:#e23b3b}
+  input:checked + .slider{background:#cbd6df}
   input:checked + .slider:before{transform:translateX(22px)}
   .add{background:#fff;border:1px dashed var(--sea);border-radius:12px;padding:14px;margin:14px 0;display:grid;grid-template-columns:auto 1fr 1fr 120px auto;gap:10px;align-items:center}
   .add input{border:1px solid var(--line);border-radius:8px;padding:9px;font-size:.95rem}
