@@ -3,14 +3,14 @@
     "emoji": "🐟",
     "name": "Vanjaram (Seer Fish)",
     "tamil": "வஞ்சிரம்",
-    "price": 1200,
+    "price": 1400,
     "soldOut": true
   },
   {
     "emoji": "🐠",
     "name": "White Pomfret",
     "tamil": "வெள்ளை வவ்வால்",
-    "price": 1000,
+    "price": 1200,
     "soldOut": true
   },
   {
@@ -24,35 +24,35 @@
     "emoji": "🐟",
     "name": "Paarai (Cobia)",
     "tamil": "பாறை",
-    "price": 600,
+    "price": 800,
     "soldOut": true
   },
   {
     "emoji": "🐟",
     "name": "Sheela (Barracuda)",
     "tamil": "ஷீலா",
-    "price": 600,
+    "price": 650,
     "soldOut": true
   },
   {
     "emoji": "🐟",
     "name": "Shankara (Red Snapper)",
     "tamil": "சங்கரா",
-    "price": 450,
+    "price": 500,
     "soldOut": true
   },
   {
     "emoji": "🦐",
     "name": "Prawns - Big Size",
     "tamil": "இறால்",
-    "price": 500,
+    "price": 1000,
     "soldOut": true
   },
   {
     "emoji": "🦐",
     "name": "Tiger Prawns",
     "tamil": "டைகர் இறால்",
-    "price": 850,
+    "price": 500,
     "soldOut": true
   },
   {
