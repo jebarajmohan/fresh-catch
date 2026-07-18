@@ -55,10 +55,10 @@
   .qty .unit{color:#5a7891;font-size:.85rem}
   .soldout-badge{display:none;margin-left:auto;background:#e23b3b;color:#fff;font-weight:800;
                  font-size:.72rem;letter-spacing:.5px;padding:3px 9px;border-radius:999px;text-transform:uppercase}
-  /* IN STOCK = green accent; SOLD OUT = greyed */
+  /* IN STOCK = green accent; SOLD OUT = red */
   .card{box-shadow:inset 4px 0 0 #1aa86b, 0 2px 10px rgba(10,110,189,.06)}
-  .card.is-soldout{opacity:.55;filter:grayscale(.6);box-shadow:none;border-color:#cbd6df}
-  .card.is-soldout .price{color:#9aa7b2}
+  .card.is-soldout{opacity:1;filter:none;border-color:#e23b3b;box-shadow:0 0 0 1px #e23b3b, 0 2px 10px rgba(226,59,59,.15)}
+  .card.is-soldout .price{color:#e23b3b}
   h2{margin:32px 0 14px;color:var(--sea-deep);font-size:1.4rem;
      border-left:5px solid var(--accent);padding-left:10px}
   form{background:#fff;border:1px solid var(--line);border-radius:14px;padding:20px;
