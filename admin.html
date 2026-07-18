@@ -18,6 +18,8 @@
   .row{display:flex;align-items:center;gap:12px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:10px;flex-wrap:wrap}
   .row .nm{font-weight:700;min-width:150px}
   .row .tl{color:#5a7891;font-size:.85rem;min-width:110px}
+  .row input.nm-in{font-weight:700;min-width:150px;border:1px solid var(--line);border-radius:8px;padding:8px;font-size:.95rem}
+  .row input.tl-in{color:#5a7891;font-size:.85rem;min-width:110px;border:1px solid var(--line);border-radius:8px;padding:8px}
   .row input.price{width:110px;border:1px solid var(--line);border-radius:8px;padding:8px;font-size:1rem}
   .row .emoji{font-size:1.6rem}
   .row.out{opacity:.6;border-color:#e23b3b}
@@ -91,8 +93,8 @@
       row.className = "row" + (p.soldOut ? " out" : "");
       row.innerHTML = `
         <span class="emoji">${p.emoji || "🐟"}</span>
-        <span class="nm">${p.name}</span>
-        <span class="tl">${p.tamil || ""}</span>
+        <input class="nm-in" value="${p.name.replace(/"/g,"&quot;")}" oninput="CATALOG[${i}].name = this.value" />
+        <input class="tl-in" value="${(p.tamil||"").replace(/"/g,"&quot;")}" oninput="CATALOG[${i}].tamil = this.value" />
         <input class="price" type="number" min="0" value="${p.price}" oninput="CATALOG[${i}].price = Number(this.value)||0" />
         <label class="switch">
           <input type="checkbox" ${p.soldOut ? "checked" : ""} onchange="CATALOG[${i}].soldOut = this.checked; this.closest('.row').classList.toggle('out', this.checked)">
