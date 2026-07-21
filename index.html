@@ -55,6 +55,10 @@
   .qty .unit{color:#5a7891;font-size:.85rem}
   .soldout-badge{display:none;margin-left:auto;background:#e23b3b;color:#fff;font-weight:800;
                  font-size:.72rem;letter-spacing:.5px;padding:3px 9px;border-radius:999px;text-transform:uppercase}
+  .drag-handle{cursor:grab;color:#a6bdd4;font-size:1.1rem;padding:0 2px;line-height:1;user-select:none}
+  .drag-handle:active{cursor:grabbing}
+  .card.dragging{opacity:.4;outline:2px dashed var(--sea);outline-offset:-2px}
+  .card.drag-over{border-top:3px solid var(--accent)}
   /* IN STOCK = green accent; SOLD OUT = greyed */
   .card{box-shadow:inset 4px 0 0 #1aa86b, 0 2px 10px rgba(10,110,189,.06)}
   .card.is-soldout{opacity:.55;filter:grayscale(.6);box-shadow:none;border-color:#cbd6df}
@@ -170,15 +174,33 @@
   const soldOut = new Set();
 
   const catalog = document.getElementById("catalog");
+  const LS_KEY = "freshcatch-order";
+  function savedOrder(){
+    try { return JSON.parse(localStorage.getItem(LS_KEY)||"[]"); } catch(e){ return []; }
+  }
+  function persistOrder(names){
+    try { localStorage.setItem(LS_KEY, JSON.stringify(names)); } catch(e){}
+  }
+  function applySavedOrder(arr){
+    const order = savedOrder();
+    if(!order.length) return arr;
+    const m = new Map(arr.map(x=>[x.name,x]));
+    const out = [];
+    for(const n of order){ if(m.has(n)) out.push(m.get(n)); }
+    for(const x of arr){ if(!order.includes(x.name)) out.push(x); }
+    return out;
+  }
   function renderCatalog(){
     catalog.innerHTML = "";
     FISH.forEach((f, i) => {
       qty[f.name] = qty[f.name] || 0;
       const card = document.createElement("div");
       card.className = "card";
-      card.id = "card-" + i;
+      card.draggable = true;
+      card.dataset.idx = i;
       card.innerHTML = `
         <div class="card-info">
+          <span class="drag-handle" title="Drag to reorder">⋮⋮</span>
           <div class="emoji">${f.emoji || "🐟"}</div>
           <div class="card-text">
             <div class="name">${f.name}</div>
@@ -194,9 +216,41 @@
           <button type="button" id="plus-${i}" onclick="step(${i},1)">+</button>
           <span class="unit">pack</span>
         </div>`;
+      card.addEventListener("dragstart", onDragStart);
+      card.addEventListener("dragend", onDragEnd);
+      card.addEventListener("dragover", onDragOver);
+      card.addEventListener("dragenter", onDragEnter);
+      card.addEventListener("dragleave", onDragLeave);
+      card.addEventListener("drop", onDrop);
       catalog.appendChild(card);
     });
     applySoldOut();
+  }
+  let dragSrc = null;
+  function onDragStart(e){
+    dragSrc = this;
+    this.classList.add("dragging");
+    e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.setData("text/plain", this.dataset.idx);
+  }
+  function onDragEnd(){
+    this.classList.remove("dragging");
+    document.querySelectorAll(".card").forEach(c=>c.classList.remove("drag-over"));
+  }
+  function onDragOver(e){ e.preventDefault(); }
+  function onDragEnter(e){ e.preventDefault(); this.classList.add("drag-over"); }
+  function onDragLeave(){ this.classList.remove("drag-over"); }
+  function onDrop(e){
+    e.preventDefault();
+    this.classList.remove("drag-over");
+    const from = parseInt(e.dataTransfer.getData("text/plain"),10);
+    const to = parseInt(this.dataset.idx,10);
+    if(isNaN(from) || isNaN(to) || from===to) return;
+    const moved = FISH.splice(from,1)[0];
+    FISH.splice(to,0,moved);
+    persistOrder(FISH.map(x=>x.name));
+    renderCatalog();
+    renderSummary();
   }
 
   function applySoldOut(){
@@ -226,10 +280,10 @@
     fetch("/api/catalog", { headers: { "cache-control": "no-store" } }).then(r => r.ok ? r.json() : []),
     fetch("/api/stock", { headers: { "cache-control": "no-store" } }).then(r => r.ok ? r.json() : {})
   ]).then(([list, stockMap]) => {
-    FISH = (Array.isArray(list) ? list : []).map(f => {
+    FISH = applySavedOrder((Array.isArray(list) ? list : []).map(f => {
       f.pack = (Number(f.price) || 0) / 2;  // 500g pack price = half of per-kg
       return f;
-    });
+    }));
     Object.keys(stockMap).forEach(n => { if(stockMap[n]) soldOut.add(n); });
     // legacy: if a product carried soldOut in catalog, honor it too
     FISH.forEach(f => { if(f.soldOut) soldOut.add(f.name); });
