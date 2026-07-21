@@ -25,6 +25,10 @@
   .row input.tl-in{color:#5a7891;font-size:.85rem;min-width:110px;border:1px solid var(--line);border-radius:8px;padding:8px}
   .row input.price{width:110px;border:1px solid var(--line);border-radius:8px;padding:8px;font-size:1rem}
   .row .emoji{font-size:1.6rem}
+  .drag-handle{cursor:grab;color:#a6bdd4;font-size:1.1rem;padding:0 4px;line-height:1;user-select:none}
+  .drag-handle:active{cursor:grabbing}
+  .row.dragging{opacity:.4;outline:2px dashed var(--sea);outline-offset:-2px}
+  .row.drag-over{border-top:3px solid var(--accent)}
   /* switch: ON (in stock) = green, OFF (sold out) = grey */
   .switch{position:relative;display:inline-block;width:52px;height:30px;flex-shrink:0}
   .switch input{opacity:0;width:0;height:0}
@@ -93,7 +97,11 @@
     CATALOG.forEach((p, i) => {
       const row = document.createElement("div");
       row.className = "row" + (p.soldOut ? " out" : "");
+      row.draggable = true;
+      row.dataset.idx = i;
+      row.id = "row-" + i;
       row.innerHTML = `
+        <span class="drag-handle" title="Drag to reorder">⋮⋮</span>
         <span class="emoji">${p.emoji || "🐟"}</span>
         <input class="nm-in" value="${p.name.replace(/"/g,"&quot;")}" oninput="CATALOG[${i}].name = this.value" />
         <input class="tl-in" value="${(p.tamil||"").replace(/"/g,"&quot;")}" oninput="CATALOG[${i}].tamil = this.value" />
@@ -103,8 +111,38 @@
           <span class="slider"></span>
         </label>
         <button class="rm" onclick="removeProduct(${i})">🗑</button>`;
+      row.addEventListener("dragstart", onAdminDragStart);
+      row.addEventListener("dragend", onAdminDragEnd);
+      row.addEventListener("dragover", onAdminDragOver);
+      row.addEventListener("dragenter", onAdminDragEnter);
+      row.addEventListener("dragleave", onAdminDragLeave);
+      row.addEventListener("drop", onAdminDrop);
       list.appendChild(row);
     });
+  }
+  let adminDragSrc = null;
+  function onAdminDragStart(e){
+    adminDragSrc = this;
+    this.classList.add("dragging");
+    e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.setData("text/plain", this.dataset.idx);
+  }
+  function onAdminDragEnd(){
+    this.classList.remove("dragging");
+    document.querySelectorAll(".row").forEach(r=>r.classList.remove("drag-over"));
+  }
+  function onAdminDragOver(e){ e.preventDefault(); }
+  function onAdminDragEnter(e){ e.preventDefault(); this.classList.add("drag-over"); }
+  function onAdminDragLeave(){ this.classList.remove("drag-over"); }
+  function onAdminDrop(e){
+    e.preventDefault();
+    this.classList.remove("drag-over");
+    const from = parseInt(e.dataTransfer.getData("text/plain"),10);
+    const to = parseInt(this.dataset.idx,10);
+    if(isNaN(from) || isNaN(to) || from===to) return;
+    const moved = CATALOG.splice(from,1)[0];
+    CATALOG.splice(to,0,moved);
+    renderList();
   }
 
   function addProduct(){
