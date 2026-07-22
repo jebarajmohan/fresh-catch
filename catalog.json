@@ -42,6 +42,13 @@
     "soldOut": false
   },
   {
+    "emoji": "🐟",
+    "name": "Nethili (Anchovy)",
+    "tamil": "நெத்திலி",
+    "price": 400,
+    "soldOut": false
+  },
+  {
     "emoji": "🦐",
     "name": "Prawns - Big Size (Peeled)",
     "tamil": "இறால்",
@@ -53,13 +60,6 @@
     "name": "Tiger Prawns",
     "tamil": "டைகர் இறால்",
     "price": 1200,
-    "soldOut": false
-  },
-  {
-    "emoji": "🐟",
-    "name": "Nethili (Anchovy)",
-    "tamil": "நெத்திலி",
-    "price": 400,
     "soldOut": false
   },
   {
