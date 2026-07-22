@@ -56,17 +56,17 @@
     "soldOut": false
   },
   {
-    "emoji": "🦀",
-    "name": "Crab - Medium Size",
-    "tamil": "நண்டு",
-    "price": 600,
-    "soldOut": false
-  },
-  {
     "emoji": "🐟",
     "name": "Nethili (Anchovy)",
     "tamil": "நெத்திலி",
     "price": 400,
+    "soldOut": false
+  },
+  {
+    "emoji": "🦀",
+    "name": "Crab - Medium Size",
+    "tamil": "நண்டு",
+    "price": 600,
     "soldOut": false
   }
 ]
