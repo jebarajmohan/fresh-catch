@@ -129,8 +129,7 @@
   <h2>🐟 Choose Your Catch</h2>
   <div class="grid" id="catalog"></div>
 
-  <h2>📝 Your Order &amp; Contact Details</h2>
-  <form id="orderForm" name="order" method="POST" netlify netlify-honeypot="bot-field" onsubmit="return buildOrder(event)">
+  <h2>📝 Your Order &amp; Contact Details</h2>  <form id="orderForm" name="order" method="POST" netlify netlify-honeypot="bot-field" onsubmit="return buildOrder(event)">
     <p class="hidden" style="display:none">
       <label>Don't fill this: <input name="bot-field" /></label>
     </p>
@@ -156,7 +155,26 @@
 
     <button class="submit" type="submit">📲 Send Order via WhatsApp</button>
   </form>
-</div>
+
+  <h2>💳 Payment</h2>
+  <div class="lead" style="display:none" id="paymentBox">
+    <div style="display:flex;gap:18px;flex-wrap:wrap;align-items:flex-start">
+      <div style="flex:1 1 220px">
+        <div style="font-weight:800;color:var(--sea-deep);margin-bottom:8px">Scan / Pay</div>
+        <div id="payQr" style="background:#fff;border:1px dashed var(--line);border-radius:12px;padding:14px;text-align:center;min-height:180px;display:flex;align-items:center;justify-content:center">
+          Loading QR…
+        </div>
+        <div style="margin-top:10px;font-size:.9rem;color:#3a5a72">
+          UPI: <b id="payUpi">—</b>
+        </div>
+      </div>
+      <div style="flex:1 1 220px">
+        <div style="font-weight:800;color:var(--sea-deep);margin-bottom:8px">Pay now</div>
+        <a id="payLink" href="#" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:8px;background:var(--ok);color:#fff;border:none;border-radius:12px;padding:13px 16px;font-weight:800;text-decoration:none">Open UPI app to pay</a>
+        <p style="font-size:.82rem;color:#5a7891;margin-top:10px">After successful payment, send your order on WhatsApp. Delivery available.</p>
+      </div>
+    </div>
+  </div></div>
 
 <footer>
   📞 WhatsApp / Call: <a href="https://wa.me/919445618342">94456 18342</a><br/>
@@ -222,20 +240,87 @@
   }
 
   // Load catalog + sold-out state
+  function renderSummary(){
+    const el = document.getElementById("summary");
+    const items = selectedItems();
+    if(items.length === 0){
+      el.innerHTML = '<span class="empty">No items selected yet.</span>';
+      document.getElementById("paymentBox").style.display = "none";
+      return;
+    }
+    let txt = `<div class="sum-head">ORDER SUMMARY</div>`;
+    let grand = 0;
+    items.forEach(it => {
+      txt += `<div class="sum-item">
+                <div class="sum-name">${it.name} <span class="sum-tamil">${it.tamil}</span></div>
+                <div class="sum-line">
+                  <span class="sum-qty">${it.packs} pack${it.packs>1?'s':''} (500g) × ₹${it.pack}</span>
+                  <span class="sum-amt">₹${it.total}</span>
+                </div>
+              </div>`;
+      grand += it.total;
+    });
+    txt += `<div class="sum-total"><span>Total</span><span>₹${grand}</span></div>`;
+    el.innerHTML = txt;
+    updatePaymentUI(grand);
+  }
+
+  let paymentCfg = { upiId: "", qrDataUri: "" };
+  function updatePaymentUI(grand){
+    const box = document.getElementById("paymentBox");
+    const upiEl = document.getElementById("payUpi");
+    const qrEl = document.getElementById("payQr");
+    const link = document.getElementById("payLink");
+    if(!box || !grand){ if(box) box.style.display = "none"; return; }
+    box.style.display = "block";
+    const upi = paymentCfg.upiId || "";
+    upiEl.textContent = upi || "Not set — ask shop to add UPI ID";
+    const amt = encodeURIComponent(String(grand));
+    const note = encodeURIComponent("Fresh Catch order");
+    const upiLink = upi ? `upi://pay?pa=${encodeURIComponent(upi)}&pn=Fresh+Catch&am=${amt}&tn=${note}&cu=INR` : "#";
+    link.href = upiLink;
+    if(upi){
+      link.textContent = `Pay ₹${grand} via UPI`;
+      link.style.background = "var(--ok)";
+      link.style.color = "#fff";
+    } else {
+      link.textContent = "UPI ID not configured";
+      link.style.background = "#cbd6df";
+      link.style.color = "#5a7891";
+    }
+    if(paymentCfg.qrDataUri && paymentCfg.qrDataUri.startsWith("data:image")){
+      qrEl.innerHTML = `<img src="${paymentCfg.qrDataUri}" style="max-width:220px;height:auto;display:block;margin:0 auto" alt="UPI QR" />`;
+    } else {
+      const qrApi = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(upiLink)}&bgcolor=ffffff`;
+      qrEl.innerHTML = `<img src="${qrApi}" style="max-width:220px;height:auto;display:block;margin:0 auto" alt="UPI QR" loading="lazy" onerror="this.parentElement.innerHTML='QR unavailable'">`;
+    }
+  }
+
+  function loadPayment(){
+    fetch("/api/pay", { headers: { "cache-control": "no-store" } })
+      .then(r => r.ok ? r.json() : {})
+      .then(data => {
+        paymentCfg = { upiId: (data && data.upiId) ? data.upiId : "", qrDataUri: (data && data.qrDataUri) ? data.qrDataUri : "" };
+        const items = selectedItems();
+        const grand = items.reduce((s,it)=>s+it.total,0);
+        updatePaymentUI(grand);
+      })
+      .catch(() => {});
+  }
   Promise.all([
     fetch("/api/catalog", { headers: { "cache-control": "no-store" } }).then(r => r.ok ? r.json() : []),
     fetch("/api/stock", { headers: { "cache-control": "no-store" } }).then(r => r.ok ? r.json() : {})
   ]).then(([list, stockMap]) => {
     FISH = (Array.isArray(list) ? list : []).map(f => {
-      f.pack = (Number(f.price) || 0) / 2;  // 500g pack price = half of per-kg
+      f.pack = (Number(f.price) || 0) / 2;
       return f;
     });
     Object.keys(stockMap).forEach(n => { if(stockMap[n]) soldOut.add(n); });
-    // legacy: if a product carried soldOut in catalog, honor it too
     FISH.forEach(f => { if(f.soldOut) soldOut.add(f.name); });
     renderCatalog();
     renderSummary();
-  }).catch(() => { /* offline: show nothing / assume available */ });
+    loadPayment();
+  }).catch(() => {});
 
   function setQty(i, val){
     let v = parseFloat(val);

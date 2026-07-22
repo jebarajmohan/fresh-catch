@@ -73,18 +73,40 @@
       <span class="status" id="status"></span>
     </div>
     <p style="margin-top:14px;font-size:.85rem;color:#5a7891">Tip: passcode is Netlify env var <code>ADMIN_CODE</code> (default: freshcatch2026).</p>
+
+    <div style="margin-top:22px;padding:18px;background:#fff;border:1px solid var(--line);border-radius:14px">
+      <div style="font-weight:800;color:var(--sea-deep);margin-bottom:10px">💳 Payment Settings</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div>
+          <label style="font-weight:600;font-size:.9rem;display:block;margin-bottom:6px">UPI ID</label>
+          <input id="p-upi" value="" oninput="PAY.UPI=this.value" placeholder="example@upi" />
+        </div>
+        <div>
+          <label style="font-weight:600;font-size:.9rem;display:block;margin-bottom:6px">QR Image URL (optional)</label>
+          <input id="p-qr" value="" oninput="PAY.QR=this.value" placeholder="https://...png" />
+        </div>
+      </div>
+      <p style="font-size:.82rem;color:#5a7891;margin-top:8px">QR URL: paste a direct image link. If blank, UPI deep link QR is generated automatically for the order total.</p>
+    </div>
   </div>
 </div>
 
 <script>
   let CATALOG = [];
   let CODE = "";
+  let PAY = { UPI: "", QR: "" };
 
   function unlock(){
     CODE = document.getElementById("code").value.trim();
     if(!CODE){ document.getElementById("lockStatus").textContent = "Enter the passcode."; return; }
-    fetch("/api/catalog").then(r => r.json()).then(data => {
-      CATALOG = Array.isArray(data) ? data : [];
+    Promise.all([
+      fetch("/api/catalog").then(r => r.json()).then(data => Array.isArray(data) ? data : []),
+      fetch("/api/pay").then(r => r.json()).then(data => data && data.upiId ? data : {})
+    ]).then(([data, pay]) => {
+      CATALOG = data;
+      PAY = { UPI: (pay && pay.upiId) ? pay.upiId : "", QR: (pay && pay.qrDataUri) ? pay.qrDataUri : "" };
+      document.getElementById("p-upi").value = PAY.UPI;
+      document.getElementById("p-qr").value = PAY.QR;
       document.getElementById("lock").style.display = "none";
       document.getElementById("panel").style.display = "block";
       renderList();
@@ -167,13 +189,22 @@
   async function save(){
     document.getElementById("status").textContent = "Saving…";
     try {
-      const res = await fetch("/api/catalog?code=" + encodeURIComponent(CODE), {
+      const res1 = await fetch("/api/catalog?code=" + encodeURIComponent(CODE), {
         method:"POST",
         headers:{ "content-type":"application/json" },
         body: JSON.stringify(CATALOG)
       });
-      if(res.status === 401){ throw new Error("wrong passcode"); }
-      if(!res.ok){ throw new Error("server save failed"); }
+      if(res1.status === 401){ throw new Error("wrong passcode"); }
+      if(!res1.ok){ throw new Error("catalog save failed"); }
+      PAY.UPI = document.getElementById("p-upi").value.trim();
+      PAY.QR = document.getElementById("p-qr").value.trim();
+      const res2 = await fetch("/api/pay?code=" + encodeURIComponent(CODE), {
+        method:"POST",
+        headers:{ "content-type":"application/json" },
+        body: JSON.stringify(PAY)
+      });
+      if(res2.status === 401){ throw new Error("wrong passcode"); }
+      if(!res2.ok){ throw new Error("payment save failed"); }
       document.getElementById("status").textContent = "Saved ✓ Changes are live.";
     } catch(e){
       document.getElementById("status").textContent = "Failed: " + e.message + ". Check passcode or redeploy.";
