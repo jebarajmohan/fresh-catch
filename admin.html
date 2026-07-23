@@ -87,6 +87,7 @@
         </div>
       </div>
       <p style="font-size:.82rem;color:#5a7891;margin-top:8px">QR URL: paste a direct image link. If blank, UPI deep link QR is generated automatically for the order total.</p>
+      <button onclick="savePayment()" style="margin-top:10px;background:var(--ok);color:#fff;border:none;border-radius:8px;padding:9px 14px;font-weight:700;cursor:pointer;font-size:.92rem">💾 Save Payment Settings</button>
     </div>
   </div>
 </div>
@@ -186,6 +187,29 @@
     renderList();
   }
 
+  async function savePayment(){
+    const btn = event.target;
+    btn.textContent = "Saving…";
+    btn.disabled = true;
+    try {
+      PAY.UPI = document.getElementById("p-upi").value.trim();
+      PAY.QR = document.getElementById("p-qr").value.trim();
+      const res = await fetch("/api/pay?code=" + encodeURIComponent(CODE), {
+        method:"POST",
+        headers:{ "content-type":"application/json" },
+        body: JSON.stringify(PAY)
+      });
+      if(res.status === 401){ throw new Error("wrong passcode"); }
+      if(!res.ok){ throw new Error("payment save failed"); }
+      btn.textContent = "Saved ✓";
+      setTimeout(()=>{ btn.textContent = "💾 Save Payment Settings"; btn.disabled = false; }, 1200);
+    } catch(e){
+      btn.textContent = "Failed — retry";
+      btn.disabled = false;
+      alert("Payment save failed: " + e.message);
+    }
+  }
+
   async function save(){
     document.getElementById("status").textContent = "Saving…";
     try {
@@ -196,15 +220,6 @@
       });
       if(res1.status === 401){ throw new Error("wrong passcode"); }
       if(!res1.ok){ throw new Error("catalog save failed"); }
-      PAY.UPI = document.getElementById("p-upi").value.trim();
-      PAY.QR = document.getElementById("p-qr").value.trim();
-      const res2 = await fetch("/api/pay?code=" + encodeURIComponent(CODE), {
-        method:"POST",
-        headers:{ "content-type":"application/json" },
-        body: JSON.stringify(PAY)
-      });
-      if(res2.status === 401){ throw new Error("wrong passcode"); }
-      if(!res2.ok){ throw new Error("payment save failed"); }
       document.getElementById("status").textContent = "Saved ✓ Changes are live.";
     } catch(e){
       document.getElementById("status").textContent = "Failed: " + e.message + ". Check passcode or redeploy.";
