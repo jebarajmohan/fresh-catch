@@ -9,6 +9,8 @@ function normalize(obj){
   const out = {};
   for(const [k,v] of Object.entries(obj)){
     const key = k.toLowerCase();
+    if(key === "upiid") key = "upiId";
+    else if(key === "qrdaturi") key = "qrDataUri";
     if(v === "" || v === null || v === undefined) continue;
     out[key] = String(v).trim();
   }
@@ -31,7 +33,7 @@ async function ghGet(){
   if(!res.ok) return null;
   const data = await res.json();
   const content = JSON.parse(Buffer.from(data.content, "base64").toString("utf8"));
-  return { content: normalize(content), sha: data.sha };
+  return { content, sha: data.sha };
 }
 
 async function ghPut(body, sha){
@@ -59,8 +61,9 @@ async function handler(event){
   if(event.httpMethod === "POST"){
     const ADMIN = process.env.ADMIN_CODE || "freshcatch2026";
     if(!code || code !== ADMIN) return { statusCode: 401, headers: { "Content-Type": "application/json" }, body: JSON.stringify({ error: "unauthorized" }) };
-    const body = JSON.parse(event.body || "{}");
-    if(!body || typeof body !== "object") return { statusCode: 400, headers: { "Content-Type": "application/json" }, body: JSON.stringify({ error: "invalid body" }) };
+    const raw = JSON.parse(event.body || "{}");
+    if(!raw || typeof raw !== "object") return { statusCode: 400, headers: { "Content-Type": "application/json" }, body: JSON.stringify({ error: "invalid body" }) };
+    const body = normalize(raw);
     const current = await ghGet();
     if(!current) return { statusCode: 500, headers: { "Content-Type": "application/json" }, body: JSON.stringify({ error: "payment.json missing" }) };
     const merged = { ...current.content, ...body };
