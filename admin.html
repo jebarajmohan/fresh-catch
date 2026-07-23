@@ -79,11 +79,11 @@
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
         <div>
           <label style="font-weight:600;font-size:.9rem;display:block;margin-bottom:6px">UPI ID</label>
-          <input id="p-upi" value="" oninput="PAY.UPI=this.value" placeholder="example@upi" />
+          <input id="p-upi" value="" oninput="PAY.upiId=this.value" placeholder="example@upi" />
         </div>
         <div>
           <label style="font-weight:600;font-size:.9rem;display:block;margin-bottom:6px">QR Image URL (optional)</label>
-          <input id="p-qr" value="" oninput="PAY.QR=this.value" placeholder="https://...png" />
+          <input id="p-qr" value="" oninput="PAY.qrDataUri=this.value" placeholder="https://...png" />
         </div>
       </div>
       <p style="font-size:.82rem;color:#5a7891;margin-top:8px">QR URL: paste a direct image link. If blank, UPI deep link QR is generated automatically for the order total.</p>
@@ -95,7 +95,7 @@
 <script>
   let CATALOG = [];
   let CODE = "";
-  let PAY = { UPI: "", QR: "" };
+  let PAY = { upiId: "", qrDataUri: "" };
 
   function unlock(){
     CODE = document.getElementById("code").value.trim();
@@ -105,9 +105,9 @@
       fetch("/api/pay").then(r => r.json()).then(data => data && data.upiId ? data : {})
     ]).then(([data, pay]) => {
       CATALOG = data;
-      PAY = { UPI: (pay && pay.upiId) ? pay.upiId : "", QR: (pay && pay.qrDataUri) ? pay.qrDataUri : "" };
-      document.getElementById("p-upi").value = PAY.UPI;
-      document.getElementById("p-qr").value = PAY.QR;
+      PAY = { upiId: (pay && pay.upiId) ? pay.upiId : "", qrDataUri: (pay && pay.qrDataUri) ? pay.qrDataUri : "" };
+      document.getElementById("p-upi").value = PAY.upiId;
+      document.getElementById("p-qr").value = PAY.qrDataUri;
       document.getElementById("lock").style.display = "none";
       document.getElementById("panel").style.display = "block";
       renderList();
@@ -192,8 +192,8 @@
     btn.textContent = "Saving…";
     btn.disabled = true;
     try {
-      PAY.UPI = document.getElementById("p-upi").value.trim();
-      PAY.QR = document.getElementById("p-qr").value.trim();
+      PAY.upiId = document.getElementById("p-upi").value.trim();
+      PAY.qrDataUri = document.getElementById("p-qr").value.trim();
       const res = await fetch("/api/pay?code=" + encodeURIComponent(CODE), {
         method:"POST",
         headers:{ "content-type":"application/json" },
