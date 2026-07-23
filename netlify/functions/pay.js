@@ -4,6 +4,17 @@ const OWNER = "jebarajmohan";
 const REPO = "fresh-catch";
 const PATH = "payment.json";
 
+function normalize(obj){
+  if(!obj || typeof obj !== "object") return obj;
+  const out = {};
+  for(const [k,v] of Object.entries(obj)){
+    const key = k.toLowerCase();
+    if(v === "" || v === null || v === undefined) continue;
+    out[key] = String(v).trim();
+  }
+  return out;
+}
+
 function ghHeaders(){
   const token = process.env.GITHUB_TOKEN || "";
   return {
@@ -20,7 +31,7 @@ async function ghGet(){
   if(!res.ok) return null;
   const data = await res.json();
   const content = JSON.parse(Buffer.from(data.content, "base64").toString("utf8"));
-  return { content, sha: data.sha };
+  return { content: normalize(content), sha: data.sha };
 }
 
 async function ghPut(body, sha){
