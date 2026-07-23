@@ -271,16 +271,17 @@
     const upiEl = document.getElementById("payUpi");
     const qrEl = document.getElementById("payQr");
     const link = document.getElementById("payLink");
-    if(!box || !grand){ if(box) box.style.display = "none"; return; }
+    if(!box) return;
     box.style.display = "block";
     const upi = paymentCfg.upiId || "";
+    const displayTotal = grand || 0;
     upiEl.textContent = upi || "Not set — ask shop to add UPI ID";
-    const amt = encodeURIComponent(String(grand));
+    const amt = encodeURIComponent(String(displayTotal));
     const note = encodeURIComponent("Fresh Catch order");
     const upiLink = upi ? `upi://pay?pa=${encodeURIComponent(upi)}&pn=Fresh+Catch&am=${amt}&tn=${note}&cu=INR` : "#";
     link.href = upiLink;
     if(upi){
-      link.textContent = `Pay ₹${grand} via UPI`;
+      link.textContent = displayTotal ? `Pay ₹${displayTotal} via UPI` : "Open UPI app to pay";
       link.style.background = "var(--ok)";
       link.style.color = "#fff";
     } else {
@@ -290,9 +291,11 @@
     }
     if(paymentCfg.qrDataUri && paymentCfg.qrDataUri.startsWith("data:image")){
       qrEl.innerHTML = `<img src="${paymentCfg.qrDataUri}" style="max-width:220px;height:auto;display:block;margin:0 auto" alt="UPI QR" />`;
-    } else {
+    } else if (upi) {
       const qrApi = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(upiLink)}&bgcolor=ffffff`;
       qrEl.innerHTML = `<img src="${qrApi}" style="max-width:220px;height:auto;display:block;margin:0 auto" alt="UPI QR" loading="lazy" onerror="this.parentElement.innerHTML='QR unavailable'">`;
+    } else {
+      qrEl.innerHTML = `<div style="color:#5a7891;font-style:italic">QR will appear once UPI ID is configured</div>`;
     }
   }
 
