@@ -56,6 +56,13 @@
     "soldOut": false
   },
   {
+    "emoji": "🦀",
+    "name": "Crab - Medium Size",
+    "tamil": "நண்டு",
+    "price": 600,
+    "soldOut": false
+  },
+  {
     "emoji": "🐟",
     "name": "Prawns - Big Size (Un Peeled)",
     "tamil": "இறால்",
@@ -67,13 +74,6 @@
     "name": "Tiger Prawns",
     "tamil": "டைகர் இறால்",
     "price": 1200,
-    "soldOut": false
-  },
-  {
-    "emoji": "🦀",
-    "name": "Crab - Medium Size",
-    "tamil": "நண்டு",
-    "price": 600,
     "soldOut": false
   }
 ]
