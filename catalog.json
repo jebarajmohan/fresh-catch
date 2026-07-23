@@ -4,7 +4,7 @@
     "name": "Vanjaram (Seer Fish)",
     "tamil": "வஞ்சிரம்",
     "price": 1400,
-    "soldOut": false
+    "soldOut": true
   },
   {
     "emoji": "🐠",
@@ -25,7 +25,7 @@
     "name": "Paarai (Cobia)",
     "tamil": "பாறை",
     "price": 800,
-    "soldOut": false
+    "soldOut": true
   },
   {
     "emoji": "🐟",
@@ -46,7 +46,7 @@
     "name": "Nethili (Anchovy)",
     "tamil": "நெத்திலி",
     "price": 400,
-    "soldOut": false
+    "soldOut": true
   },
   {
     "emoji": "🦐",
@@ -60,7 +60,7 @@
     "name": "Prawns - Big Size (Un Peeled)",
     "tamil": "இறால்",
     "price": 500,
-    "soldOut": false
+    "soldOut": true
   },
   {
     "emoji": "🦐",
