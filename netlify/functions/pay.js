@@ -4,19 +4,6 @@ const OWNER = "jebarajmohan";
 const REPO = "fresh-catch";
 const PATH = "payment.json";
 
-function normalize(obj){
-  if(!obj || typeof obj !== "object") return obj;
-  const out = {};
-  for(const [k,v] of Object.entries(obj)){
-    const key = k.toLowerCase();
-    if(key === "upiid") key = "upiId";
-    else if(key === "qrdaturi") key = "qrDataUri";
-    if(v === "" || v === null || v === undefined) continue;
-    out[key] = String(v).trim();
-  }
-  return out;
-}
-
 function ghHeaders(){
   const token = process.env.GITHUB_TOKEN || "";
   return {
@@ -61,9 +48,8 @@ async function handler(event){
   if(event.httpMethod === "POST"){
     const ADMIN = process.env.ADMIN_CODE || "freshcatch2026";
     if(!code || code !== ADMIN) return { statusCode: 401, headers: { "Content-Type": "application/json" }, body: JSON.stringify({ error: "unauthorized" }) };
-    const raw = JSON.parse(event.body || "{}");
-    if(!raw || typeof raw !== "object") return { statusCode: 400, headers: { "Content-Type": "application/json" }, body: JSON.stringify({ error: "invalid body" }) };
-    const body = normalize(raw);
+    const body = JSON.parse(event.body || "{}");
+    if(!body || typeof body !== "object") return { statusCode: 400, headers: { "Content-Type": "application/json" }, body: JSON.stringify({ error: "invalid body" }) };
     const current = await ghGet();
     if(!current) return { statusCode: 500, headers: { "Content-Type": "application/json" }, body: JSON.stringify({ error: "payment.json missing" }) };
     const merged = { ...current.content, ...body };
